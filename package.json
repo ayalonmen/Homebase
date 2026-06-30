@@ -1,0 +1,16 @@
+{
+  "name": "life-management-dashboard",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "A personal life-management cockpit — vanilla JS ES modules + PocketBase REST. No build step, no bundler.",
+  "scripts": {
+    "serve:api": "pocketbase serve --http=127.0.0.1:8090",
+    "setup": "node setup.js",
+    "serve:web": "npx --yes serve -l 5173 public",
+    "start": "powershell -ExecutionPolicy Bypass -File ./start.ps1"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

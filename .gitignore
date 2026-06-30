@@ -1,0 +1,14 @@
+# PocketBase binary (platform-specific, ~32MB — download per README) + runtime data
+pocketbase
+pocketbase.exe
+pb_data/
+pb_migrations/
+
+# handoff bundle / scratch
+_handoff/
+_probe*/
+*.zip
+
+# node
+node_modules/
+npm-debug.log*

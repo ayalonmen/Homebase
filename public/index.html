@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Life Management Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <!-- Soft neon corner glows (decorative, non-interactive) -->
+  <div class="app-bg" aria-hidden="true"></div>
+
+  <!-- render.js owns everything inside these three roots -->
+  <main id="app" class="container"></main>
+  <div id="modal-root"></div>
+  <div id="toast-root" aria-live="polite" role="status"></div>
+
+  <!-- hidden file input for import -->
+  <input id="import-file" type="file" accept="application/json,.json" hidden />
+
+  <script type="module" src="./app.js"></script>
+</body>
+</html>
