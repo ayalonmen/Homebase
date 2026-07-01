@@ -36,8 +36,12 @@ Subscriptions, Road to Freedom). Vanilla JS ES modules on the front, PocketBase
 npm start
 ```
 
-This starts PocketBase, provisions + seeds the database, and serves the
-frontend at **http://127.0.0.1:5173**. Ctrl+C stops everything.
+This starts PocketBase, provisions + seeds the database **on the first run only**,
+and serves the frontend at **http://127.0.0.1:3000**. Ctrl+C stops everything.
+Subsequent `npm start`s **keep your data** (they don't re-provision).
+
+To deliberately wipe and reseed to the clean demo data: `npm run reset`
+(or `npm start -- -Reset`).
 
 ### Manual (any platform), three terminals
 
@@ -45,14 +49,15 @@ frontend at **http://127.0.0.1:5173**. Ctrl+C stops everything.
 # 1. backend (REST API)
 ./pocketbase serve --http=127.0.0.1:8090        # Windows: .\pocketbase.exe serve --http=127.0.0.1:8090
 
-# 2. provision + seed (one time; safe to re-run — it drops & recreates)
+# 2. provision + seed — RUN ONCE. setup.js DROPS + recreates every collection,
+#    so re-running it wipes your data (that is the intended "reset" behavior).
 node setup.js
 
 # 3. frontend
-npx serve -l 5173 public
+npx serve -l 3000 public
 ```
 
-Open **http://127.0.0.1:5173**.
+Open **http://127.0.0.1:3000**.
 
 ## How it works
 

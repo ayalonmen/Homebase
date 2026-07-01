@@ -7,8 +7,9 @@
   "scripts": {
     "serve:api": "pocketbase serve --http=127.0.0.1:8090",
     "setup": "node setup.js",
-    "serve:web": "npx --yes serve -l 5173 public",
-    "start": "powershell -ExecutionPolicy Bypass -File ./start.ps1"
+    "serve:web": "npx --yes serve -l 3000 public",
+    "start": "powershell -ExecutionPolicy Bypass -File ./start.ps1",
+    "reset": "powershell -ExecutionPolicy Bypass -File ./start.ps1 -Reset"
   },
   "engines": {
     "node": ">=18"

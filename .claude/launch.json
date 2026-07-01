@@ -1,12 +1,12 @@
 {
   "version": "0.0.1",
-  "autoPort": true,
   "configurations": [
     {
       "name": "web",
       "runtimeExecutable": "npx",
-      "runtimeArgs": ["--yes", "serve", "public"],
-      "autoPort": true
+      "runtimeArgs": ["--yes", "serve", "-l", "3000", "public"],
+      "port": 3000,
+      "autoPort": false
     }
   ]
 }

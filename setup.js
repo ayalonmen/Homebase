@@ -195,7 +195,7 @@ async function seed() {
     await rebuildCollections();
     await seed();
     log.ok('\x1b[1mProvisioning complete.\x1b[0m');
-    console.log(`\nNext: serve the frontend →  npx serve -l 5173 public\n`);
+    console.log(`\nNext: serve the frontend →  npx serve -l 3000 public\n`);
   } catch (e) {
     log.err(e.message || String(e));
     process.exitCode = 1;
