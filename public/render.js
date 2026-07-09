@@ -317,7 +317,7 @@ function freedomWidget(model, ui, d) {
     el('div', { class: 'goal-top' }, [
       el('div', {}, [
         el('div', { class: 'nw-label', text: 'Net worth' }),
-        el('div', { class: 'nw-value' }, [counter('nw-current', d.current, 'compact', 'nw-num')]),
+        el('div', { class: 'nw-value' }, [counter('nw-current', d.current, 'compact', 'nw-big')]),
         el('div', { class: 'nw-sub', text: `of ${fmtCompact(model.settings.goal)} goal · ${fmtCompact(d.remaining)} to go` }),
       ]),
       el('div', { css: 'text-align:right' }, [

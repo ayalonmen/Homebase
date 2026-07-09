@@ -1,0 +1,9 @@
+{
+  "name": "life-management-dashboard",
+  "components": {
+    "web": {
+      "path": "public",
+      "check": "node --check public/app.js"
+    }
+  }
+}
