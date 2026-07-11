@@ -3,7 +3,11 @@
   "components": {
     "web": {
       "path": "public",
-      "check": "node --check public/app.js"
+      "check": "node --check app.js"
     }
+  },
+  "e2e": {
+    "run": "powershell -ExecutionPolicy Bypass -File ./e2e/run-e2e.ps1",
+    "testDir": "e2e/tests"
   }
 }

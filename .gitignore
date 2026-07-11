@@ -12,3 +12,8 @@ _probe*/
 # node
 node_modules/
 npm-debug.log*
+
+# Playwright's own run output (not the tests or seed data — those are committed)
+test-results/
+playwright-report/
+blob-report/
