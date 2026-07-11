@@ -29,6 +29,13 @@ const ADMIN_PASSWORD = process.env.PB_ADMIN_PASSWORD || 'devpassword1234';
 // on Windows, so an explicit path is required.
 const PB_BIN = join(__dirname, process.platform === 'win32' ? 'pocketbase.exe' : 'pocketbase');
 
+// Overrides so this same provisioner can point at a throwaway PocketBase
+// instance (e2e seed-data building) instead of the real dev one, without
+// touching config.js — config.js is also loaded by the browser, where
+// `process` doesn't exist, so env-driven overrides have to live here instead.
+const RESOLVED_API_BASE = process.env.PB_API_BASE || API_BASE;
+const PB_DATA_DIR = process.env.PB_DATA_DIR; // undefined → pocketbase's own default (./pb_data)
+
 // --- tiny coloured logger ----------------------------------------------------
 const log = {
   step: (m) => console.log(`\x1b[36m▸\x1b[0m ${m}`),
@@ -77,13 +84,13 @@ let TOKEN = '';
 async function pb(path, { method = 'GET', body } = {}) {
   let res;
   try {
-    res = await fetch(API_BASE + path, {
+    res = await fetch(RESOLVED_API_BASE + path, {
       method,
       headers: { 'Content-Type': 'application/json', ...(TOKEN ? { Authorization: TOKEN } : {}) },
       body: body !== undefined ? JSON.stringify(body) : undefined,
     });
   } catch (e) {
-    throw new Error(`Cannot reach the API at ${API_BASE} (${method} ${path}). Is PocketBase running? [${e.message || e}]`);
+    throw new Error(`Cannot reach the API at ${RESOLVED_API_BASE} (${method} ${path}). Is PocketBase running? [${e.message || e}]`);
   }
   if (res.status === 204) return null;
   const text = await res.text();
@@ -97,7 +104,9 @@ async function pb(path, { method = 'GET', body } = {}) {
 // --- 1. superuser bootstrap --------------------------------------------------
 function ensureSuperuser() {
   log.step(`Ensuring superuser ${ADMIN_EMAIL} (pocketbase superuser upsert)`);
-  const r = spawnSync(PB_BIN, ['superuser', 'upsert', ADMIN_EMAIL, ADMIN_PASSWORD], {
+  const args = ['superuser', 'upsert', ADMIN_EMAIL, ADMIN_PASSWORD];
+  if (PB_DATA_DIR) args.push('--dir', PB_DATA_DIR);
+  const r = spawnSync(PB_BIN, args, {
     cwd: __dirname, encoding: 'utf8',
   });
   if (r.status !== 0) {
@@ -110,16 +119,16 @@ function ensureSuperuser() {
 
 // --- 2. wait for API + auth --------------------------------------------------
 async function waitForApi(timeoutMs = 20000) {
-  log.step(`Waiting for PocketBase at ${API_BASE} …`);
+  log.step(`Waiting for PocketBase at ${RESOLVED_API_BASE} …`);
   const deadline = Date.now() + timeoutMs;
   while (Date.now() < deadline) {
     try {
-      const res = await fetch(API_BASE + '/health');
+      const res = await fetch(RESOLVED_API_BASE + '/health');
       if (res.ok) { log.ok('API is up.'); return; }
     } catch { /* not up yet */ }
     await new Promise((r) => setTimeout(r, 400));
   }
-  throw new Error(`PocketBase did not respond at ${API_BASE}. Start it with: ${PB_BIN} serve --http=127.0.0.1:8090`);
+  throw new Error(`PocketBase did not respond at ${RESOLVED_API_BASE}. Start it with: ${PB_BIN} serve --http=127.0.0.1:8090`);
 }
 
 async function authenticate() {

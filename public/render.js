@@ -132,10 +132,8 @@ const SUBLINES = {
 function header(model, ui, derived) {
   const now = new Date();
   const tod = timeOfDay(now.getHours());
-  const dateStr = now.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
 
   const left = el('div', {}, [
-    el('div', { class: 'eyebrow', text: dateStr }),
     el('h1', { class: 'greeting', text: `Good ${tod}, ${model.settings.name}.` }),
     el('p', { class: 'subline', text: SUBLINES[tod] }),
   ]);
