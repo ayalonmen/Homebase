@@ -30,6 +30,40 @@ export function sumBalances(obj) {
   return NW_FIELDS.reduce((t, f) => t + (Number(obj?.[f.k]) || 0), 0);
 }
 
+// --- due-date helpers (timezone-safe, string-only) ---------------------------
+// A due date is a calendar DAY, never a moment in time. Everything here works on
+// the string only — no `new Date(...)` / `toLocaleDateString(...)` anywhere on
+// the due-date path — because localizing a UTC-midnight datetime can roll the
+// day back for negative UTC offsets. That keeps the read-back day equal to the
+// entered day in every timezone.
+export const DUE_DATE_FORMAT = 'YYYY-MM-DD';
+const MONTHS_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+// Coerce any inbound value (date-only string, PB datetime string, '', null,
+// undefined) to a canonical 'YYYY-MM-DD', or null when absent/invalid. Takes the
+// first 10 chars and format-checks — never constructs a Date.
+export function normalizeDueDate(raw) {
+  if (raw == null) return null;
+  const day = String(raw).slice(0, 10);
+  return /^\d{4}-\d{2}-\d{2}$/.test(day) ? day : null;
+}
+
+// Value for an <input type="date"> — the canonical day, or '' when null.
+export function toDueDateInput(dueDate) {
+  return normalizeDueDate(dueDate) || '';
+}
+
+// Human/accessible label parsed from the Y-M-D parts (MONTHS_SHORT lookup, no
+// Date) so the displayed day equals the stored day in every timezone. '' when
+// null. e.g. '2026-07-14' -> 'Jul 14, 2026'.
+export function formatDueDate(dueDate) {
+  const day = normalizeDueDate(dueDate);
+  if (!day) return '';
+  const [y, m, d] = day.split('-');
+  const month = MONTHS_SHORT[Number(m) - 1];
+  return month ? `${month} ${Number(d)}, ${y}` : '';
+}
+
 // --- per-form validators ------------------------------------------------------
 // Each returns { ok, error, value } where value is a normalized draft.
 
@@ -37,7 +71,8 @@ export function validateTask(draft) {
   const title = String(draft?.title ?? '').trim();
   if (!title) return err('Add a task title to continue.');
   const category = isAreaKey(draft?.category) ? draft.category : 'general';
-  return ok({ title, category, done: Boolean(draft?.done) });
+  // dueDate is optional: absent/empty/invalid normalizes to null and never fails.
+  return ok({ title, category, done: Boolean(draft?.done), dueDate: normalizeDueDate(draft?.dueDate) });
 }
 
 export function validateSubscription(draft) {

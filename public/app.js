@@ -12,7 +12,7 @@
 import { COLLECTIONS, SETTINGS_KEY, SYNC_DEBOUNCE_MS, NW_FIELDS } from './config.js';
 import { listAll, createRecord, updateRecord, deleteRecord } from './api.js';
 import {
-  validateTask, validateSubscription, validateSnapshot, validateGoal, validateModel,
+  validateTask, validateSubscription, validateSnapshot, validateGoal, validateModel, normalizeDueDate,
 } from './validator.js';
 import {
   toModel, mutate, applyModel, undo, redo, canUndo, canRedo,
@@ -170,6 +170,14 @@ function toggleTask(key) {
 }
 function delTask(key) { mutate((m) => { m.tasks = m.tasks.filter((x) => x.key !== key); }); afterChange('Task removed'); focusEl('add:task'); }
 
+// Set / change / clear one task's due date. rawValue is the <input type="date">
+// value ('' clears). Normalizes to a canonical day (or null) and lets the
+// debounced diff-sync persist the change.
+function setTaskDueDate(key, rawValue) {
+  mutate((m) => { const t = m.tasks.find((x) => x.key === key); if (t) t.dueDate = normalizeDueDate(rawValue); });
+  afterChange();
+}
+
 function toggleSub(key) {
   let msg;
   mutate((m) => { const s = m.subscriptions.find((x) => x.key === key); if (s) { s.active = !s.active; msg = s.name + (s.active ? ' reactivated' : ' paused'); } });
@@ -190,9 +198,9 @@ function openForm(kind) {
 }
 
 function saveTask() {
-  const res = validateTask({ title: val('f-task-title'), category: ui.qaArea });
+  const res = validateTask({ title: val('f-task-title'), category: ui.qaArea, dueDate: val('f-task-due') });
   if (!res.ok) { toast(res.error); return; }
-  mutate((m) => { m.tasks.unshift({ key: makeKey('task', res.value.title), title: res.value.title, category: res.value.category, done: false }); });
+  mutate((m) => { m.tasks.unshift({ key: makeKey('task', res.value.title), title: res.value.title, category: res.value.category, done: false, dueDate: res.value.dueDate }); });
   ui.qaOpen = false;
   afterChange('Task added  ✓');
 }
@@ -310,6 +318,13 @@ function onClick(e) {
   handleAction(t.dataset.action, t.dataset);
 }
 
+// Delegated 'change' handler (mirrors the click/keydown delegation model): the
+// per-row due-date <input type="date"> commits on change, not click.
+function onChange(e) {
+  const t = e.target;
+  if (t?.dataset?.action === 'set-due-date') setTaskDueDate(t.dataset.arg, t.value);
+}
+
 function onKeydown(e) {
   if (e.key === 'Enter') {
     const t = e.target;
@@ -347,6 +362,7 @@ async function init() {
 
   document.addEventListener('click', onClick);
   document.addEventListener('keydown', onKeydown);
+  document.addEventListener('change', onChange);
   document.getElementById('import-file').addEventListener('change', onImportFile);
 
   rerender();

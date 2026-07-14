@@ -13,6 +13,7 @@
 // mapping and can never drift.
 
 import { COLLECTIONS, SETTINGS_KEY, NW_FIELDS, DEFAULTS } from './config.js';
+import { normalizeDueDate } from './validator.js';
 
 const clone = (x) => structuredClone(x);
 const num = (v) => { const n = Number(v); return Number.isFinite(n) ? n : 0; };
@@ -23,7 +24,10 @@ const num = (v) => { const n = Number(v); return Number.isFinite(n) ? n : 0; };
 export function toRecord(collection, m) {
   switch (collection) {
     case COLLECTIONS.tasks:
-      return { key: m.key, title: m.title, category: m.category, done: !!m.done, body: {} };
+      // dueDate lives in the JSON `body` (body.due); send '' to CLEAR it when the
+      // model value is null. Stored in body — the always-present JSON column — so
+      // the value round-trips regardless of the flat-column migration state.
+      return { key: m.key, title: m.title, category: m.category, done: !!m.done, body: { due: m.dueDate || '' } };
     case COLLECTIONS.subscriptions:
       return {
         key: m.key, name: m.name, cost: num(m.cost), cycle: m.cycle,
@@ -49,7 +53,7 @@ export function fromRecord(collection, r) {
   const body = r.body || {};
   switch (collection) {
     case COLLECTIONS.tasks:
-      return { key: r.key, title: r.title, category: r.category, done: !!r.done };
+      return { key: r.key, title: r.title, category: r.category, done: !!r.done, dueDate: normalizeDueDate(body.due) };
     case COLLECTIONS.subscriptions:
       return {
         key: r.key, name: r.name, cost: num(r.cost), cycle: r.cycle,
