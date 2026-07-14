@@ -11,6 +11,7 @@
 import {
   AREAS, SUBCATS, CYCLES, NW_FIELDS, NW_FIELDS_SHORT, TABS,
 } from './config.js';
+import { toDueDateInput, formatDueDate } from './validator.js';
 
 // ---------------------------------------------------------------------------
 // tiny DOM builder
@@ -232,11 +233,18 @@ function tasksWidget(model, ui, d) {
   } else {
     for (const t of d.list) {
       const info = area(t.category);
+      const dueLabel = formatDueDate(t.dueDate);
       const row = el('div', { class: animatedRow('tasks', t.key, 'taskrow' + (t.done ? ' done' : '')), css: ac(info.accent) }, [
         el('button', { class: 'check' + (t.done ? ' done' : ''), attrs: { 'aria-label': t.done ? 'mark not done' : 'mark done', 'aria-pressed': String(t.done) }, data: { action: 'toggle-task', arg: t.key, focus: 'toggle-task:' + t.key } }, [el('span', { class: 'glyph', text: '✓' })]),
         dot(),
         el('span', { class: 'task-title', text: t.title }),
         el('span', { class: 'pill', text: info.name }),
+        el('input', {
+          class: 'due-input',
+          attrs: { type: 'date', 'aria-label': dueLabel || 'Set due date', title: dueLabel || 'Set due date' },
+          value: toDueDateInput(t.dueDate),
+          data: { action: 'set-due-date', arg: t.key, focus: 'task-due:' + t.key },
+        }),
         el('button', { class: 'del', attrs: { 'aria-label': 'delete task' }, data: { action: 'del-task', arg: t.key, focus: 'del-task:' + t.key }, text: '✕' }),
       ]);
       list.append(row);
@@ -409,6 +417,8 @@ function taskForm(ui) {
     el('input', { class: 'text-input', attrs: { id: 'f-task-title', placeholder: 'Task title', autocomplete: 'off' }, data: { focus: 'f-task-title', enter: 'save-task' } }),
     el('div', { class: 'mono-label', text: 'Category' }),
     grid,
+    el('div', { class: 'mono-label', text: 'Due date' }),
+    el('input', { class: 'text-input', attrs: { id: 'f-task-due', type: 'date' }, data: { focus: 'f-task-due' } }),
     el('button', { class: 'save-btn accent', css: ac(accent), data: { action: 'save-task' }, text: 'Add task' }),
   ]);
 }
