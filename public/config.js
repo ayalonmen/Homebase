@@ -26,6 +26,10 @@ export const SETTINGS_KEY = 'app';
 // Debounce window (ms) for flushing local mutations to PocketBase.
 export const SYNC_DEBOUNCE_MS = 500;
 
+// A task counts as "due soon" when it falls due within this many calendar days
+// of today (inclusive). No lower bound is applied, so overdue tasks qualify too.
+export const SOON_THRESHOLD_DAYS = 1;
+
 // ---------------------------------------------------------------------------
 // Domain palettes — every life area / category owns a neon accent.
 // Order matters: object key order drives the order dots/buttons render in.
