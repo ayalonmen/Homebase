@@ -11,7 +11,7 @@
 import {
   AREAS, SUBCATS, CYCLES, NW_FIELDS, NW_FIELDS_SHORT, TABS,
 } from './config.js';
-import { toDueDateInput, formatDueDate } from './validator.js';
+import { toDueDateInput, formatDueDate, isSoon } from './validator.js';
 
 // ---------------------------------------------------------------------------
 // tiny DOM builder
@@ -48,6 +48,16 @@ export function fmtCompact(v) {
 }
 const toMonthly = (s) => s.cycle === 'yearly' ? s.cost / 12 : s.cycle === 'weekly' ? s.cost * 52 / 12 : s.cost;
 const sumBal = (r) => NW_FIELDS.reduce((t, f) => t + (Number(r[f.k]) || 0), 0);
+
+// Local calendar day as 'YYYY-MM-DD', built from local Y/M/D parts (the product
+// treats due dates as local calendar days). Lives here, not in the pure module,
+// because it reads the clock; it is the single source of "today" handed to
+// isSoon(...).
+function todayISO() {
+  const d = new Date();
+  const p = (n) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+}
 
 const fmt = (v, kind) => {
   if (kind === 'money') return money(v);
@@ -208,7 +218,7 @@ function tasksWidget(model, ui, d) {
 
   // filters row
   const seg = el('div', { class: 'segmented', attrs: { role: 'tablist', 'aria-label': 'Filter tasks' } });
-  for (const f of [{ k: 'open', label: 'Open' }, { k: 'done', label: 'Done' }]) {
+  for (const f of [{ k: 'open', label: 'Open' }, { k: 'soon', label: 'Soon' }, { k: 'done', label: 'Done' }]) {
     seg.append(el('button', { class: 'seg', attrs: { 'aria-pressed': String(ui.filter === f.k) }, data: { action: 'set-filter', arg: f.k, focus: 'filter:' + f.k } }, [
       f.label, el('span', { class: 'seg-count', text: String(d.countBy[f.k]) }),
     ]));
@@ -491,12 +501,23 @@ function derive(model, ui) {
   const total = items.length, doneCount = items.filter((i) => i.done).length, openCount = total - doneCount;
   const pct = total ? Math.round(doneCount / total * 100) : 0;
   const scoped = ui.area === 'all' ? items : items.filter((i) => i.category === ui.area);
-  const countBy = { open: scoped.filter((i) => !i.done).length, done: scoped.filter((i) => i.done).length };
-  let list = scoped.filter((i) => ui.filter === 'done' ? i.done : !i.done);
+  const today = todayISO();
+  const countBy = {
+    open: scoped.filter((i) => !i.done).length,
+    soon: scoped.filter((i) => isSoon(i.dueDate, i.done, today)).length,
+    done: scoped.filter((i) => i.done).length,
+  };
+  let list = ui.filter === 'done'
+    ? scoped.filter((i) => i.done)
+    : ui.filter === 'soon'
+      ? scoped.filter((i) => isSoon(i.dueDate, i.done, today))
+      : scoped.filter((i) => !i.done);
   list = list.slice().sort((a, b) => Number(a.done) - Number(b.done)); // stable: open first
   const emptyMsg = ui.filter === 'done'
     ? 'Nothing checked off here yet — one thing at a time.'
-    : 'All clear — nothing open here. Nice work.';
+    : ui.filter === 'soon'
+      ? 'Nothing due soon — you’re ahead of it.'
+      : 'All clear — nothing open here. Nice work.';
 
   const active = model.subscriptions.filter((s) => s.active);
   const monthly = active.reduce((sum, s) => sum + toMonthly(s), 0);

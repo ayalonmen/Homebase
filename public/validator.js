@@ -6,7 +6,7 @@
 // tested in isolation, and reused by both per-form validation and the
 // whole-model check that gates persistence.
 
-import { AREAS, SUBCATS, CYCLES, NW_FIELDS } from './config.js';
+import { AREAS, SUBCATS, CYCLES, NW_FIELDS, SOON_THRESHOLD_DAYS } from './config.js';
 
 const ok = (value) => ({ ok: true, error: '', value });
 const err = (error) => ({ ok: false, error, value: undefined });
@@ -62,6 +62,31 @@ export function formatDueDate(dueDate) {
   const [y, m, d] = day.split('-');
   const month = MONTHS_SHORT[Number(m) - 1];
   return month ? `${month} ${Number(d)}, ${y}` : '';
+}
+
+// Whole-day difference (dueDate − today) in calendar days, or null when either
+// side is absent/invalid. Both operands are parsed from their Y-M-D parts into
+// Date.UTC ms and subtracted, so the result lives entirely in the UTC frame — it
+// never localizes a day and is timezone-independent. Positive = future, 0 =
+// today, negative = overdue.
+export function daysUntilDue(dueDate, today) {
+  const due = normalizeDueDate(dueDate);
+  const now = normalizeDueDate(today);
+  if (!due || !now) return null;
+  const ms = (day) => {
+    const [y, m, d] = day.split('-').map(Number);
+    return Date.UTC(y, m - 1, d);
+  };
+  return Math.round((ms(due) - ms(now)) / 86400000);
+}
+
+// True when a task should surface in the "Soon" view for the given day: not
+// done, has a valid due date, and due within the threshold (diff ≤
+// SOON_THRESHOLD_DAYS, with no lower bound so overdue tasks count).
+export function isSoon(dueDate, done, today) {
+  if (done) return false;
+  const diff = daysUntilDue(dueDate, today);
+  return diff !== null && diff <= SOON_THRESHOLD_DAYS;
 }
 
 // --- per-form validators ------------------------------------------------------
